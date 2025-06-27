@@ -220,9 +220,9 @@ class PieChartPainter extends BaseChartPainter<PieChartData> {
 
     final path = Path()
       ..moveTo(startOuter.dx, startOuter.dy)
-      ..arcToPoint(endOuter, radius: Radius.circular(cornerRadius), clockwise: true)
+      ..arcToPoint(endOuter, radius: Radius.circular(section.borderRadius), clockwise: true)
       ..lineTo(startInner.dx, startInner.dy)
-      ..arcToPoint(endInner, radius: Radius.circular(cornerRadius), clockwise: true)
+      ..arcToPoint(endInner, radius: Radius.circular(section.borderRadius), clockwise: true)
       ..close();
 
     return path;
@@ -271,6 +271,19 @@ class PieChartPainter extends BaseChartPainter<PieChartData> {
     Path sectionPath,
     CanvasWrapper canvasWrapper,
   ) {
+    // Draw boxShadow first
+    for (final shadow in section.boxShadow) {
+      final shadowPaint = Paint()
+        ..color = shadow.color
+        ..maskFilter = MaskFilter.blur(BlurStyle.normal, shadow.blurSigma)
+        ..style = PaintingStyle.fill;
+      canvasWrapper.drawPath(
+        sectionPath.shift(shadow.offset),
+        shadowPaint,
+      );
+    }
+
+    // Then fill the main section
     _sectionPaint
       ..setColorOrGradient(
         section.color,
@@ -278,6 +291,7 @@ class PieChartPainter extends BaseChartPainter<PieChartData> {
         sectionPath.getBounds(),
       )
       ..style = PaintingStyle.fill;
+
     canvasWrapper.drawPath(sectionPath, _sectionPaint);
   }
 
@@ -497,4 +511,8 @@ class PieChartPainter extends BaseChartPainter<PieChartData> {
 
     return badgeWidgetsOffsets;
   }
+}
+
+extension on BoxShadow {
+  double get blurSigma => blurRadius * 0.57735 + 0.5;
 }

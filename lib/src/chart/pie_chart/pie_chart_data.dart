@@ -67,9 +67,7 @@ class PieChartData extends BaseChartData with EquatableMixin {
   final bool titleSunbeamLayout;
 
   /// We hold this value to determine weight of each [PieChartSectionData.value].
-  double get sumValue => sections
-      .map((data) => data.value)
-      .reduce((first, second) => first + second);
+  double get sumValue => sections.map((data) => data.value).reduce((first, second) => first + second);
 
   /// Copies current [PieChartData] to a new [PieChartData],
   /// and replaces provided values.
@@ -108,8 +106,7 @@ class PieChartData extends BaseChartData with EquatableMixin {
         ),
         pieTouchData: b.pieTouchData,
         sectionsSpace: lerpDouble(a.sectionsSpace, b.sectionsSpace, t),
-        startDegreeOffset:
-            lerpDouble(a.startDegreeOffset, b.startDegreeOffset, t),
+        startDegreeOffset: lerpDouble(a.startDegreeOffset, b.startDegreeOffset, t),
         sections: lerpPieChartSectionDataList(a.sections, b.sections, t),
         titleSunbeamLayout: b.titleSunbeamLayout,
       );
@@ -165,6 +162,8 @@ class PieChartSectionData with EquatableMixin {
     this.badgeWidget,
     double? titlePositionPercentageOffset,
     double? badgePositionPercentageOffset,
+    this.borderRadius = 0.0,
+    this.boxShadow = const [],
   })  : value = value ?? 10,
         color = color ?? Colors.cyan,
         radius = radius ?? 40,
@@ -222,6 +221,8 @@ class PieChartSectionData with EquatableMixin {
   /// 0.0 means near the center,
   /// 1.0 means near the outside of the [PieChart].
   final double badgePositionPercentageOffset;
+  final double borderRadius;
+  final List<BoxShadow> boxShadow;
 
   /// Copies current [PieChartSectionData] to a new [PieChartSectionData],
   /// and replaces provided values.
@@ -237,6 +238,8 @@ class PieChartSectionData with EquatableMixin {
     Widget? badgeWidget,
     double? titlePositionPercentageOffset,
     double? badgePositionPercentageOffset,
+    double? borderRadius,
+    List<BoxShadow>? boxShadow,
   }) =>
       PieChartSectionData(
         value: value ?? this.value,
@@ -248,10 +251,10 @@ class PieChartSectionData with EquatableMixin {
         title: title ?? this.title,
         borderSide: borderSide ?? this.borderSide,
         badgeWidget: badgeWidget ?? this.badgeWidget,
-        titlePositionPercentageOffset:
-            titlePositionPercentageOffset ?? this.titlePositionPercentageOffset,
-        badgePositionPercentageOffset:
-            badgePositionPercentageOffset ?? this.badgePositionPercentageOffset,
+        titlePositionPercentageOffset: titlePositionPercentageOffset ?? this.titlePositionPercentageOffset,
+        badgePositionPercentageOffset: badgePositionPercentageOffset ?? this.badgePositionPercentageOffset,
+        borderRadius: borderRadius ?? this.borderRadius,
+        boxShadow: boxShadow ?? this.boxShadow,
       );
 
   /// Lerps a [PieChartSectionData] based on [t] value, check [Tween.lerp].
@@ -296,6 +299,8 @@ class PieChartSectionData with EquatableMixin {
         badgeWidget,
         titlePositionPercentageOffset,
         badgePositionPercentageOffset,
+        borderRadius,
+        boxShadow,
       ];
 }
 
@@ -398,8 +403,7 @@ class PieTouchResponse extends BaseTouchResponse {
 
 /// It lerps a [PieChartData] to another [PieChartData] (handles animation for updating values)
 class PieChartDataTween extends Tween<PieChartData> {
-  PieChartDataTween({required PieChartData begin, required PieChartData end})
-      : super(begin: begin, end: end);
+  PieChartDataTween({required PieChartData begin, required PieChartData end}) : super(begin: begin, end: end);
 
   /// Lerps a [PieChartData] based on [t] value, check [Tween.lerp].
   @override
