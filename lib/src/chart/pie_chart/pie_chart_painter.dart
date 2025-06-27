@@ -142,8 +142,7 @@ class PieChartPainter extends BaseChartPainter<PieChartData> {
           )
           ..restore();
         _sectionPaint.blendMode = BlendMode.srcOver;
-        if (section.borderSide.width != 0.0 &&
-            section.borderSide.color.a != 0.0) {
+        if (section.borderSide.width != 0.0 && section.borderSide.color.a != 0.0) {
           _sectionStrokePaint
             ..strokeWidth = section.borderSide.width
             ..color = section.borderSide.color;
@@ -181,7 +180,6 @@ class PieChartPainter extends BaseChartPainter<PieChartData> {
   }
 
   /// Generates a path around a section
-  @visibleForTesting
   Path generateSectionPath(
     PieChartSectionData section,
     double sectionSpace,
@@ -190,74 +188,44 @@ class PieChartPainter extends BaseChartPainter<PieChartData> {
     Offset center,
     double centerRadius,
   ) {
-    final sectionRadiusRect = Rect.fromCircle(
-      center: center,
-      radius: centerRadius + section.radius,
-    );
-
-    final centerRadiusRect = Rect.fromCircle(
-      center: center,
-      radius: centerRadius,
-    );
-
     final startRadians = Utils().radians(tempAngle);
     final sweepRadians = Utils().radians(sectionDegree);
     final endRadians = startRadians + sweepRadians;
 
-    final startLineDirection =
-        Offset(math.cos(startRadians), math.sin(startRadians));
+    final outerRadius = centerRadius + section.radius;
+    final innerRadius = centerRadius;
 
-    final startLineFrom = center + startLineDirection * centerRadius;
-    final startLineTo = startLineFrom + startLineDirection * section.radius;
-    final startLine = Line(startLineFrom, startLineTo);
+    final startOuter = center +
+        Offset(
+          math.cos(startRadians) * outerRadius,
+          math.sin(startRadians) * outerRadius,
+        );
+    final endOuter = center +
+        Offset(
+          math.cos(endRadians) * outerRadius,
+          math.sin(endRadians) * outerRadius,
+        );
+    final startInner = center +
+        Offset(
+          math.cos(endRadians) * innerRadius,
+          math.sin(endRadians) * innerRadius,
+        );
+    final endInner = center +
+        Offset(
+          math.cos(startRadians) * innerRadius,
+          math.sin(startRadians) * innerRadius,
+        );
 
-    final endLineDirection = Offset(math.cos(endRadians), math.sin(endRadians));
+    const cornerRadius = 8.0;
 
-    final endLineFrom = center + endLineDirection * centerRadius;
-    final endLineTo = endLineFrom + endLineDirection * section.radius;
-    final endLine = Line(endLineFrom, endLineTo);
-
-    var sectionPath = Path()
-      ..moveTo(startLine.from.dx, startLine.from.dy)
-      ..lineTo(startLine.to.dx, startLine.to.dy)
-      ..arcTo(sectionRadiusRect, startRadians, sweepRadians, false)
-      ..lineTo(endLine.from.dx, endLine.from.dy)
-      ..arcTo(centerRadiusRect, endRadians, -sweepRadians, false)
-      ..moveTo(startLine.from.dx, startLine.from.dy)
+    final path = Path()
+      ..moveTo(startOuter.dx, startOuter.dy)
+      ..arcToPoint(endOuter, radius: Radius.circular(cornerRadius), clockwise: true)
+      ..lineTo(startInner.dx, startInner.dy)
+      ..arcToPoint(endInner, radius: Radius.circular(cornerRadius), clockwise: true)
       ..close();
 
-    /// Subtract section space from the sectionPath
-    if (sectionSpace != 0) {
-      final startLineSeparatorPath = createRectPathAroundLine(
-        Line(startLineFrom, startLineTo),
-        sectionSpace,
-      );
-      try {
-        sectionPath = Path.combine(
-          PathOperation.difference,
-          sectionPath,
-          startLineSeparatorPath,
-        );
-      } catch (_) {
-        /// It's a flutter engine issue with [Path.combine] in web-html renderer
-        /// https://github.com/imaNNeo/fl_chart/issues/955
-      }
-
-      final endLineSeparatorPath =
-          createRectPathAroundLine(Line(endLineFrom, endLineTo), sectionSpace);
-      try {
-        sectionPath = Path.combine(
-          PathOperation.difference,
-          sectionPath,
-          endLineSeparatorPath,
-        );
-      } catch (_) {
-        /// It's a flutter engine issue with [Path.combine] in web-html renderer
-        /// https://github.com/imaNNeo/fl_chart/issues/955
-      }
-    }
-
-    return sectionPath;
+    return path;
   }
 
   /// Creates a rect around a narrow line
@@ -267,25 +235,16 @@ class PieChartPainter extends BaseChartPainter<PieChartData> {
     final normalized = line.normalize();
 
     final verticalAngle = line.direction() + (math.pi / 2);
-    final verticalDirection =
-        Offset(math.cos(verticalAngle), math.sin(verticalAngle));
+    final verticalDirection = Offset(math.cos(verticalAngle), math.sin(verticalAngle));
 
     final startPoint1 = Offset(
-      line.from.dx -
-          (normalized * (width / 2)).dx -
-          (verticalDirection * width).dx,
-      line.from.dy -
-          (normalized * (width / 2)).dy -
-          (verticalDirection * width).dy,
+      line.from.dx - (normalized * (width / 2)).dx - (verticalDirection * width).dx,
+      line.from.dy - (normalized * (width / 2)).dy - (verticalDirection * width).dy,
     );
 
     final startPoint2 = Offset(
-      line.to.dx +
-          (normalized * (width / 2)).dx -
-          (verticalDirection * width).dx,
-      line.to.dy +
-          (normalized * (width / 2)).dy -
-          (verticalDirection * width).dy,
+      line.to.dx + (normalized * (width / 2)).dx - (verticalDirection * width).dx,
+      line.to.dy + (normalized * (width / 2)).dy - (verticalDirection * width).dy,
     );
 
     final startPoint3 = Offset(
@@ -386,14 +345,11 @@ class PieChartPainter extends BaseChartPainter<PieChartData> {
       Offset sectionCenter(double percentageOffset) =>
           center +
           Offset(
-            math.cos(Utils().radians(sectionCenterAngle)) *
-                (centerRadius + (section.radius * percentageOffset)),
-            math.sin(Utils().radians(sectionCenterAngle)) *
-                (centerRadius + (section.radius * percentageOffset)),
+            math.cos(Utils().radians(sectionCenterAngle)) * (centerRadius + (section.radius * percentageOffset)),
+            math.sin(Utils().radians(sectionCenterAngle)) * (centerRadius + (section.radius * percentageOffset)),
           );
 
-      final sectionCenterOffsetTitle =
-          sectionCenter(section.titlePositionPercentageOffset);
+      final sectionCenterOffsetTitle = sectionCenter(section.titlePositionPercentageOffset);
 
       if (section.showTitle) {
         final span = TextSpan(
@@ -428,8 +384,7 @@ class PieChartPainter extends BaseChartPainter<PieChartData> {
     if (data.centerSpaceRadius.isFinite) {
       return data.centerSpaceRadius;
     }
-    final maxRadius =
-        data.sections.reduce((a, b) => a.radius > b.radius ? a : b).radius;
+    final maxRadius = data.sections.reduce((a, b) => a.radius > b.radius ? a : b).radius;
     return (viewSize.shortestSide - (maxRadius * 2)) / 2;
   }
 
@@ -468,11 +423,9 @@ class PieChartPainter extends BaseChartPainter<PieChartData> {
 
       if (sectionAngle == 360) {
         final distance = math.sqrt(
-          math.pow(localPosition.dx - center.dx, 2) +
-              math.pow(localPosition.dy - center.dy, 2),
+          math.pow(localPosition.dx - center.dx, 2) + math.pow(localPosition.dy - center.dy, 2),
         );
-        if (distance >= centerRadius &&
-            distance <= section.radius + centerRadius) {
+        if (distance >= centerRadius && distance <= section.radius + centerRadius) {
           foundSectionData = section;
           foundSectionDataPosition = i;
         }
@@ -531,14 +484,11 @@ class PieChartPainter extends BaseChartPainter<PieChartData> {
       Offset sectionCenter(double percentageOffset) =>
           center +
           Offset(
-            math.cos(Utils().radians(sectionCenterAngle)) *
-                (centerRadius + (section.radius * percentageOffset)),
-            math.sin(Utils().radians(sectionCenterAngle)) *
-                (centerRadius + (section.radius * percentageOffset)),
+            math.cos(Utils().radians(sectionCenterAngle)) * (centerRadius + (section.radius * percentageOffset)),
+            math.sin(Utils().radians(sectionCenterAngle)) * (centerRadius + (section.radius * percentageOffset)),
           );
 
-      final sectionCenterOffsetBadgeWidget =
-          sectionCenter(section.badgePositionPercentageOffset);
+      final sectionCenterOffsetBadgeWidget = sectionCenter(section.badgePositionPercentageOffset);
 
       badgeWidgetsOffsets[i] = sectionCenterOffsetBadgeWidget;
 
